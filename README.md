@@ -3,7 +3,7 @@
 Adds optimized Active Record association methods for "top N" queries to ActiveRecord using `JOIN LATERAL` that are eager-loadable to avoid N+1 queries. For example:
 
 - Finding the most recent post each for a collection of users
-- Finding the top ranked comment each for a collection of users
+- Finding the top five ranked comments each for a collection of users
 
 You can read more about these types of queries on [Benito Serna's "Fetching the top n per group with a lateral join with rails"](https://bhserna.com/fetching-the-top-n-per-group-with-a-lateral-join-with-rails.html).
 
@@ -35,6 +35,61 @@ User.where(active: true).includes(:last_post, :last_five_posts, :top_comment).ea
   user.last_five_posts
   user.top_comment
 end
+
+# Aad compound indexes to your database to make these queries fast!
+add_index :comments, [:post_id, :created_at]
+add_index :comments, [:post_id, :votes_count]
+```
+
+## Why?
+
+Finding the "Top N" is a common problem, that can be easily solved with a `JOIN LATERAL` when writing raw SQL queries. For example, to find the most recent comments for some posts, we might write:
+
+```sql
+SELECT "comments".*
+FROM "posts"
+INNER JOIN LATERAL (
+    SELECT "comments".*
+    FROM "comments"
+    WHERE "comments"."post_id" = "posts"."id"
+    ORDER BY "comments"."created_at" DESC
+    LIMIT 1
+) lateral_table ON TRUE
+WHERE "posts"."id" IN (1, 2, 3, 4, 5)
+```
+
+Active Record associations present a bit of a challenge. This is because the association query has `WHERE` conditions added _after_ the association scope that allows changing the foreign key, but not the column name. This means that some indirection is necessary in order to make the query work and have the conditions applied to the correct column in a way that the query planner can efficiently understand and optimize:
+
+```SQL
+SELECT "comments".*
+FROM (
+    SELECT
+        "posts"."id" AS post_id_alias,
+        "lateral_table".*
+    FROM "posts"
+    INNER JOIN LATERAL (
+        SELECT "comments".*
+        FROM "comments"
+        WHERE "comments"."post_id" = "posts"."id"
+        ORDER BY "comments"."created_at" DESC
+        LIMIT 1
+    ) lateral_table ON TRUE
+) comments
+WHERE "comments"."post_id_alias" IN (1, 2, 3, 4, 5)
+```
+
+The resulting optimized `EXPLAIN ANALYZE` looks like:
+
+```sql
+Nested Loop  (cost=0.56..41.02 rows=5 width=72) (actual time=0.058..0.082 rows=4 loops=1)
+  ->  Index Only Scan using posts_pkey on posts  (cost=0.28..17.46 rows=5 width=8) (actual time=0.022..0.027 rows=4 loops=1)
+        Index Cond: (id = ANY ('{1,2,3,4,5}'::bigint[]))
+        Heap Fetches: 0
+  ->  Limit  (cost=0.29..4.70 rows=1 width=64) (actual time=0.012..0.013 rows=1 loops=4)
+        ->  Index Scan Backward using index_comments_on_post_id_and_created_at on comments  (cost=0.29..44.46 rows=10 width=64) (actual time=0.012..0.012 rows=1 loops=4)
+              Index Cond: (post_id = posts.id)
+Planning Time: 0.200 ms
+Execution Time: 0.106 ms
 ```
 
 ## Development
