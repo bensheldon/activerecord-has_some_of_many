@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class ActiveRecordHasSomeOfManyTest < ActiveSupport::TestCase
@@ -95,5 +97,23 @@ class ActiveRecordHasSomeOfManyTest < ActiveSupport::TestCase
     assert_queries_match(expected_query) do
       TestHasSomeOfManyPost.preload(:last_two_comments).load
     end
+  end
+
+  test ".build_scope" do
+    relation = ActiveRecord::HasSomeOfMany::Associations.build_scope(Post, Comment.order(id: :desc), primary_key: "id", foreign_key: "post_id", foreign_key_alias: "post_id_alias", limit: 1)
+
+    assert_equal relation.to_sql, strip(<<~SQL)
+      SELECT "comments".* FROM (
+        SELECT "posts"."id" AS post_id_alias, "lateral_table".* 
+        FROM "posts" 
+        INNER JOIN LATERAL (
+          SELECT "comments".* 
+          FROM "comments" 
+          WHERE "comments"."post_id" = "posts"."id" 
+          ORDER BY "comments"."id" DESC
+          LIMIT 1
+        ) lateral_table ON TRUE
+      ) comments
+    SQL
   end
 end
