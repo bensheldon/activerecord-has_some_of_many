@@ -38,7 +38,13 @@ module ActiveRecord
                           .arel.lateral(lateral_table.name)
                       ).on("TRUE")
 
-        relation.klass.from(subselect.as(relation.arel_table.name))
+        select_values = if relation.klass.ignored_columns.any?
+                          [relation.klass.arel_table[foreign_key_alias]] + relation.klass.columns.map { |column| relation.klass.arel_table[column.name] }
+                        else
+                          [relation.klass.arel_table[Arel.star]]
+                        end
+
+        relation.klass.select(select_values).from(subselect.as(relation.arel_table.name))
       end
 
       class_methods do
