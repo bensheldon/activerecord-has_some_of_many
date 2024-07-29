@@ -20,6 +20,11 @@ DB_CONFIG = if ENV.fetch("DATABASE", "postgresql") == "postgresql"
             end
 
 begin
+  log_file = File.open(File.expand_path("../tmp/test.log", __dir__), "a").tap do |f|
+    f.binmode
+    f.sync = true
+  end
+  ActiveRecord::Base.logger = ActiveSupport::Logger.new(log_file)
   ActiveRecord::Base.establish_connection(DB_CONFIG)
 
   ActiveRecord::Schema.verbose = false

@@ -29,7 +29,7 @@ module ActiveRecord
 
       def self.build_scope(klass, relation, primary_key:, foreign_key:, foreign_key_alias:, limit: nil)
         lateral_table = Arel::Table.new('lateral_table')
-        subselect = klass.unscope(:select)
+        subselect = klass.unscope(:select, :joins, :where, :order, :limit)
                       .select(klass.arel_table[primary_key].as(foreign_key_alias), lateral_table[Arel.star])
                       .arel.join(
                         relation
