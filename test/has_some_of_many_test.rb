@@ -151,4 +151,45 @@ class ActiveRecordHasSomeOfManyTest < ActiveSupport::TestCase
       ) comments
     SQL
   end
+
+  test "Active Record batches does not rescope subselect query" do
+    10.times do |post_index|
+      post = TestHasSomeOfManyPost.create! title: "Post #{post_index + 1}"
+      10.times do |comment_index|
+        post.comments.create!(body: "#{post.title} Comment #{comment_index + 1}")
+      end
+    end
+
+    expected_query = strip(<<~SQL)
+      SELECT "comments".*
+      FROM (
+        SELECT "posts"."id" AS post_id_alias, "lateral_table".*
+        FROM "posts"
+        INNER JOIN LATERAL (
+          SELECT "comments".*
+          FROM "comments"
+          WHERE "comments"."post_id" = "posts"."id"
+          ORDER BY "comments"."created_at" DESC
+          LIMIT $1
+        ) lateral_table ON TRUE
+      ) comments
+      WHERE "comments"."post_id_alias" IN ($2, $3, $4, $5, $6)
+    SQL
+
+    assert_queries_match(expected_query, count: 2) do
+      TestHasSomeOfManyPost.where.not(title: nil).includes(:last_two_comments).find_in_batches(batch_size: 5) do |batch_array|
+        batch_array.each do |post|
+          assert_equal ["#{post.title} Comment 10", "#{post.title} Comment 9"], post.last_two_comments.map(&:body)
+        end
+      end
+    end
+
+    assert_queries_match(expected_query, count: 2) do
+      TestHasSomeOfManyPost.in_batches(of: 5) do |batch_relation|
+        batch_relation.includes(:last_two_comments).each do |post|
+          assert_equal ["#{post.title} Comment 10", "#{post.title} Comment 9"], post.last_two_comments.map(&:body)
+        end
+      end
+    end
+  end
 end
