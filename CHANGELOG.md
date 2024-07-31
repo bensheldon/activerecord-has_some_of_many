@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.0.1](https://github.com/bensheldon/activerecord-has_some_of_many/tree/v1.0.1) (2024-07-31)
+
+[Full Changelog](https://github.com/bensheldon/activerecord-has_some_of_many/compare/v1.0.0...v1.0.1)
+
+**Fixed bugs:**
+
+- Fix require `version.rb` path [\#6](https://github.com/bensheldon/activerecord-has_some_of_many/pull/6) ([bensheldon](https://github.com/bensheldon))
+
 ## [v1.0.0](https://github.com/bensheldon/activerecord-has_some_of_many/tree/v1.0.0) (2024-07-31)
 
 [Full Changelog](https://github.com/bensheldon/activerecord-has_some_of_many/compare/c30640d768ded1c1c752152ef15b955bafe2b715...v1.0.0)
