@@ -1,9 +1,10 @@
 # `activerecord-has_some_of_many`
 
-Adds optimized Active Record association methods for "top N" queries to ActiveRecord using `JOIN LATERAL` that are eager-loadable to avoid N+1 queries. For example:
+This gem adds new optimized Active Record association methods (`has_one_of_many`, `has_some_of_many`) for "top N" queries to ActiveRecord using `JOIN LATERAL` that are eager-loadable (`includes(:association)`, `preloads(:association)`) to avoid N+1 queries, and is compatible with typical queries and batch methods (`find_each`, `in_batches`, find_in_batches`). For example, you might have these types of queries in your application:
 
-- Finding the most recent post each for a collection of users
-- Finding the top five ranked comments each for a collection of users
+- Users have many posts, and you want to query the most recent post for each user 
+- Posts have many comments, and you want to query the 5 most recent visible comments for each post
+- Posts have many comments, and you want to query the one comment with the largest `votes_count` for each post
 
 You can read more about these types of queries on [Benito Serna's "Fetching the top n per group with a lateral join with rails"](https://bhserna.com/fetching-the-top-n-per-group-with-a-lateral-join-with-rails.html).
 
@@ -43,7 +44,11 @@ add_index :comments, [:post_id, :votes_count]
 
 ## Why?
 
-Finding the "Top N" is a common problem, that can be easily solved with a `JOIN LATERAL` when writing raw SQL queries. For example, to find the most recent comments for some posts, we might write:
+Finding the "Top N" is a common problem, that can be easily solved with a `JOIN LATERAL` when writing raw SQL queries. Lateral Joins were introduced in Postgres 9.3: 
+
+> a LATERAL join is like a SQL foreach loop, in which Postgres will iterate over each row in a result set and evaluate a subquery using that row as a parameter. ([source](https://www.heap.io/blog/postgresqls-powerful-new-join-type-lateral))
+ 
+For example, to find only the one most recent comments for a collection of posts, we might write:
 
 ```sql
 SELECT "comments".*
@@ -91,6 +96,14 @@ Nested Loop  (cost=0.56..41.02 rows=5 width=72) (actual time=0.058..0.082 rows=4
 Planning Time: 0.200 ms
 Execution Time: 0.106 ms
 ```
+
+## History
+
+Back in 2018 I (Ben Sheldon) was working to speed up [Open311 Status](https://status.open311.org), an uptime and performance monitor for government websites; I was using a Window Function at the time to query the most recent status for each monitored website, and it was _slow_ 🐌 I [tweeted about the problem](https://x.com/postgresql/status/1033797250936389633) and the Postgres Twitter account replied and told me about `LATERAL` joins ✨
+
+![Tweet from Postgres](history.jpg)
+
+A few years after that, Benito Serna shared on Reddit an excellent series of blog posts about fetching latest-N-of-each records. The first post didn't mention `LATERAL` joins, so [I commented on that](https://www.reddit.com/r/rails/comments/kmofhp/comment/ghnf0hy/) and he updated the posts to include it 🙌 Since then it's been a go-to reference for these types of queries.
 
 ## Development
 
