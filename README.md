@@ -8,6 +8,12 @@ This gem adds new optimized Active Record association methods (`has_one_of_many`
 
 You can read more about these types of queries on [Benito Serna's "Fetching the top n per group with a lateral join with rails"](https://bhserna.com/fetching-the-top-n-per-group-with-a-lateral-join-with-rails.html).
 
+## Compatibility
+
+This gem is only compatible with databases that offer `LATERAL` joins within Active Record. As far as I'm aware, that is **only Postgres**. 
+
+This gem is not necessary on SQLite, as SQLite will perform lateral-like behavior on join queries by default. MySQL has support for lateral queries, but they are not yet implemented in Active Record.
+
 ## Usage
 
 Add to your gemfile, and run `bundle install`:
