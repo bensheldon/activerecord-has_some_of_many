@@ -1,4 +1,4 @@
-require_relative "lib/active_record/has_some_of_many/version"
+require_relative "lib/activerecord/has_some_of_many/version"
 
 Gem::Specification.new do |spec|
   spec.name        = "activerecord-has_some_of_many"

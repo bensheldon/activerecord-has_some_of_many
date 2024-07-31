@@ -6,3 +6,9 @@ gemspec
 
 gem "sqlite3"
 gem "pg"
+
+group :development do
+  gem "dotenv-rails"
+  gem "gem-release", require: false
+  gem "github_changelog_generator", require: false
+end
