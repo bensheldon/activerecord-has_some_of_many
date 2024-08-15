@@ -1,6 +1,6 @@
 # `activerecord-has_some_of_many`
 
-This gem adds new optimized Active Record association methods (`has_one_of_many`, `has_some_of_many`) for "top N" queries to ActiveRecord using `JOIN LATERAL` that are eager-loadable (`includes(:association)`, `preloads(:association)`) to avoid N+1 queries, and is compatible with typical queries and batch methods (`find_each`, `in_batches`, find_in_batches`). For example, you might have these types of queries in your application:
+This gem adds new optimized Active Record association methods (`has_one_of_many`, `has_some_of_many`) for "top N" queries to ActiveRecord using `JOIN LATERAL` that are eager-loadable (`includes(:association)`, `preloads(:association)`) to avoid N+1 queries, and is compatible with typical queries and batch methods (`find_each`, `in_batches`, `find_in_batches`). For example, you might have these types of queries in your application:
 
 - Users have many posts, and you want to query the most recent post for each user 
 - Posts have many comments, and you want to query the 5 most recent visible comments for each post
