@@ -31,7 +31,7 @@ class User < ActiveRecord::Base
   # You can also use `has_some_of_many` to get the top N records. Be sure to add a limit to the scope.
   has_some_of_many :last_five_posts, -> { order("created_at DESC").limit(5) }, class_name: "Post"
 
-  # More complex scopees are possible, for example:
+  # More complex scopes are possible, for example:
   has_one_of_many :top_comment, -> { where(published: true).order("votes_count DESC") }, class_name: "Comment"
   has_some_of_many :top_ten_comments, -> { where(published: true).order("votes_count DESC").limit(10) }, class_name: "Comment"
 end
@@ -43,7 +43,7 @@ User.where(active: true).includes(:last_post, :last_five_posts, :top_comment).ea
   user.top_comment
 end
 
-# Aad compound indexes to your database to make these queries fast!
+# Add compound indexes to your database to make these queries fast!
 add_index :comments, [:post_id, :created_at]
 add_index :comments, [:post_id, :votes_count]
 ```
