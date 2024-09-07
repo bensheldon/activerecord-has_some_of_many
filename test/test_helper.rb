@@ -5,6 +5,7 @@ require 'active_record'
 require 'activerecord-has_some_of_many'
 
 require_relative "support/active_record_query_assertions"
+require_relative "support/sql_test_helpers"
 
 DB_CONFIG = if ENV.fetch("DATABASE", "postgresql") == "postgresql"
               {
@@ -40,6 +41,14 @@ begin
       t.references :post, index: false
       t.index [:post_id, :created_at]
     end
+
+    create_table :leafs, force: true do |t|
+      t.timestamps
+      t.boolean :published
+      t.string :name
+      t.bigint :parent_id
+      t.index [:parent_id, :created_at]
+    end
   end
 rescue ActiveRecord::NoDatabaseError
   raise if retried ||= nil
@@ -58,4 +67,9 @@ end
 
 class Comment < ActiveRecord::Base
   belongs_to :post
+end
+
+class Leaf < ActiveRecord::Base
+  belongs_to :parent, class_name: "Leaf", foreign_key: "parent_id", optional: true
+  has_many :children, class_name: "Leaf", foreign_key: "parent_id"
 end
