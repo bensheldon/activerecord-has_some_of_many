@@ -33,7 +33,8 @@ module ActiveRecord
                       .select(klass.arel_table[primary_key].as(foreign_key_alias), lateral_table[Arel.star])
                       .arel.join(
                         relation
-                          .where(relation.arel_table[foreign_key].eq(klass.arel_table[primary_key]))
+                          .then { |query| relation.table.name == klass.arel_table.name ? ActiveRecord::HasSomeOfMany::RelationRewriter.new(query).alias_table("#{klass.table_name}__alias") : query }
+                          .then { |query| query.where(query.table[foreign_key].eq(klass.arel_table[primary_key])) }
                           .then { |query| limit ? query.limit(limit) : query }
                           .arel.lateral(lateral_table.name)
                       ).on("TRUE")

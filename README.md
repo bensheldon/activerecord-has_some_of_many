@@ -2,7 +2,7 @@
 
 This gem adds new optimized Active Record association methods (`has_one_of_many`, `has_some_of_many`) for "top N" queries to ActiveRecord using `JOIN LATERAL` that are eager-loadable (`includes(:association)`, `preloads(:association)`) to avoid N+1 queries, and is compatible with typical queries and batch methods (`find_each`, `in_batches`, `find_in_batches`). For example, you might have these types of queries in your application:
 
-- Users have many posts, and you want to query the most recent post for each user 
+- Users have many posts, and you want to query the most recent post for each user
 - Posts have many comments, and you want to query the 5 most recent visible comments for each post
 - Posts have many comments, and you want to query the one comment with the largest `votes_count` for each post
 
@@ -10,9 +10,13 @@ You can read more about these types of queries on [Benito Serna's "Fetching the 
 
 ## Compatibility
 
-This gem is only compatible with databases that offer `LATERAL` joins within Active Record. As far as I'm aware, that is **only Postgres**. 
+This gem is only compatible with databases that offer `LATERAL` joins within Active Record. As far as I'm aware, that is **only Postgres**.
 
 This gem is not necessary on SQLite, as SQLite will perform lateral-like behavior on join queries by default. MySQL has support for lateral queries, but they are not yet implemented in Active Record.
+
+**Really complex queries may not work; please open an issue!** This library works by rewriting Active Record queries; it's possible to create some very complex queries with Active Record. Some things that are specifically known to work:
+  - Model associations to the same model. It works.
+  - _Please help expand this list by opening an issue if you find something that doesn't work!_
 
 ## Usage
 
@@ -50,10 +54,10 @@ add_index :comments, [:post_id, :votes_count]
 
 ## Why?
 
-Finding the "Top N" is a common problem, that can be easily solved with a `JOIN LATERAL` when writing raw SQL queries. Lateral Joins were introduced in Postgres 9.3: 
+Finding the "Top N" is a common problem, that can be easily solved with a `JOIN LATERAL` when writing raw SQL queries. Lateral Joins were introduced in Postgres 9.3:
 
 > a LATERAL join is like a SQL foreach loop, in which Postgres will iterate over each row in a result set and evaluate a subquery using that row as a parameter. ([source](https://www.heap.io/blog/postgresqls-powerful-new-join-type-lateral))
- 
+
 For example, to find only the one most recent comments for a collection of posts, we might write:
 
 ```sql

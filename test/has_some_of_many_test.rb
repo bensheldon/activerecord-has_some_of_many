@@ -8,6 +8,7 @@ class ActiveRecordHasSomeOfManyTest < ActiveSupport::TestCase
   def setup
     Post.delete_all
     Comment.delete_all
+    Leaf.delete_all
   end
 
   def strip(sql)
@@ -24,6 +25,11 @@ class ActiveRecordHasSomeOfManyTest < ActiveSupport::TestCase
 
   class TestHasSomeOfManyPost < Post
     has_some_of_many :last_two_comments, -> { order(created_at: :desc).limit(2) }, class_name: 'Comment', foreign_key: "post_id"
+  end
+
+  class TestHasSomeOfManyLeaf < Leaf
+    has_one_of_many :last_child, -> { order(created_at: :desc) }, class_name: 'Leaf', foreign_key: "parent_id"
+    has_some_of_many :last_two_children, -> { order(created_at: :desc).limit(2) }, class_name: 'Leaf', foreign_key: "parent_id"
   end
 
   test "#has_one_of_many" do
@@ -99,6 +105,42 @@ class ActiveRecordHasSomeOfManyTest < ActiveSupport::TestCase
     end
   end
 
+  test "self-referential relations" do
+    5.times do
+      leaf = TestHasSomeOfManyLeaf.create!
+      10.times do |index|
+        leaf.children.create!(name: "Child #{index + 1}")
+      end
+    end
+
+    assert_equal ["Child 10", "Child 9"], TestHasSomeOfManyLeaf.where(parent_id: nil).first.last_two_children.map(&:name)
+
+    assert_queries_count(2) do
+      TestHasSomeOfManyLeaf.where(parent_id: nil).preload(:last_two_children).each do |leaf|
+        assert_equal ["Child 10", "Child 9"], leaf.last_two_children.map(&:name)
+      end
+    end
+    expected_query = strip(<<~SQL)
+      SELECT "leafs".*
+      FROM (
+        SELECT "leafs"."id" AS parent_id_alias, "lateral_table".*
+        FROM "leafs"
+        INNER JOIN LATERAL (
+          SELECT "leafs__alias".*
+          FROM "leafs" "leafs__alias"
+          WHERE "leafs__alias"."parent_id" = "leafs"."id"
+          ORDER BY "leafs__alias"."created_at" DESC
+          LIMIT $1
+        ) lateral_table ON TRUE
+      ) leafs
+      WHERE "leafs"."parent_id_alias" IN ($2, $3, $4, $5, $6)
+    SQL
+
+    assert_queries_match(expected_query) do
+      TestHasSomeOfManyLeaf.where(parent_id: nil).preload(:last_two_children).load
+    end
+  end
+
   class CommentWithIgnoredColumns < Comment
     self.ignored_columns = %w[created_at updated_at]
   end
@@ -117,12 +159,12 @@ class ActiveRecordHasSomeOfManyTest < ActiveSupport::TestCase
     assert_equal relation.to_sql, strip(<<~SQL)
       SELECT "comments"."post_id_alias", "comments"."id", "comments"."body", "comments"."post_id"
       FROM (
-        SELECT "posts"."id" AS post_id_alias, "lateral_table".* 
-        FROM "posts" 
+        SELECT "posts"."id" AS post_id_alias, "lateral_table".*
+        FROM "posts"
         INNER JOIN LATERAL (
           SELECT "comments"."id", "comments"."body", "comments"."post_id"
-          FROM "comments" 
-          WHERE "comments"."post_id" = "posts"."id" 
+          FROM "comments"
+          WHERE "comments"."post_id" = "posts"."id"
           ORDER BY "comments"."id" DESC
           LIMIT 1
         ) lateral_table ON TRUE
@@ -139,12 +181,12 @@ class ActiveRecordHasSomeOfManyTest < ActiveSupport::TestCase
 
     assert_equal relation.to_sql, strip(<<~SQL)
       SELECT "comments".* FROM (
-        SELECT "posts"."id" AS post_id_alias, "lateral_table".* 
-        FROM "posts" 
+        SELECT "posts"."id" AS post_id_alias, "lateral_table".*
+        FROM "posts"
         INNER JOIN LATERAL (
-          SELECT "comments".* 
-          FROM "comments" 
-          WHERE "comments"."post_id" = "posts"."id" 
+          SELECT "comments".*
+          FROM "comments"
+          WHERE "comments"."post_id" = "posts"."id"
           ORDER BY "comments"."id" DESC
           LIMIT 1
         ) lateral_table ON TRUE
