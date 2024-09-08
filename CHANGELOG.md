@@ -1,5 +1,21 @@
 # Changelog
 
+## [v1.1.0](https://github.com/bensheldon/activerecord-has_some_of_many/tree/v1.1.0) (2024-09-08)
+
+[Full Changelog](https://github.com/bensheldon/activerecord-has_some_of_many/compare/v1.0.1...v1.1.0)
+
+**Fixed bugs:**
+
+- Support self-referencing relations where the children are the same model as the parent [\#10](https://github.com/bensheldon/activerecord-has_some_of_many/pull/10) ([bensheldon](https://github.com/bensheldon))
+
+**Closed issues:**
+
+- has\_some\_of\_many returns empty when associated with same model [\#8](https://github.com/bensheldon/activerecord-has_some_of_many/issues/8)
+
+**Merged pull requests:**
+
+- Fix typo: missing backtick on readme [\#7](https://github.com/bensheldon/activerecord-has_some_of_many/pull/7) ([carlosantoniodasilva](https://github.com/carlosantoniodasilva))
+
 ## [v1.0.1](https://github.com/bensheldon/activerecord-has_some_of_many/tree/v1.0.1) (2024-07-31)
 
 [Full Changelog](https://github.com/bensheldon/activerecord-has_some_of_many/compare/v1.0.0...v1.0.1)
