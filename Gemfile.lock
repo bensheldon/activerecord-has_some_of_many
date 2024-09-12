@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    activerecord-has_some_of_many (1.1.0)
+    activerecord-has_some_of_many (1.2.0)
       activerecord (>= 7.0.0.alpha)
       railties (>= 7.0.0.alpha)
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.2.0](https://github.com/bensheldon/activerecord-has_some_of_many/tree/v1.2.0) (2024-09-12)
+
+[Full Changelog](https://github.com/bensheldon/activerecord-has_some_of_many/compare/v1.1.0...v1.2.0)
+
+**Fixed bugs:**
+
+- build: only include the needed parts of the Rails meta-gem [\#11](https://github.com/bensheldon/activerecord-has_some_of_many/pull/11) ([bf4](https://github.com/bf4))
+
+**Closed issues:**
+
+- Is it possible to use `joins` with `has_one_of_many` associations? [\#9](https://github.com/bensheldon/activerecord-has_some_of_many/issues/9)
+
 ## [v1.1.0](https://github.com/bensheldon/activerecord-has_some_of_many/tree/v1.1.0) (2024-09-08)
 
 [Full Changelog](https://github.com/bensheldon/activerecord-has_some_of_many/compare/v1.0.1...v1.1.0)
