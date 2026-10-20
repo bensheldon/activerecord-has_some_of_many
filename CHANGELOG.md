@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.2.1](https://github.com/bensheldon/activerecord-has_some_of_many/tree/v1.2.1) (2026-10-20)
+
+[Full Changelog](https://github.com/bensheldon/activerecord-has_some_of_many/compare/v1.2.0...v1.2.1)
+
+**Merged pull requests:**
+
+- Don't query the database schema for the primary key when declaring has\_some\_of\_many associations [\#14](https://github.com/bensheldon/activerecord-has_some_of_many/pull/14) ([bensheldon](https://github.com/bensheldon))
+
 ## [v1.2.0](https://github.com/bensheldon/activerecord-has_some_of_many/tree/v1.2.0) (2024-09-12)
 
 [Full Changelog](https://github.com/bensheldon/activerecord-has_some_of_many/compare/v1.1.0...v1.2.0)
