@@ -11,17 +11,20 @@ module ActiveRecord
       # @param [Proc, nil] scope A scope to apply to the association
       # @param [Hash] options Additional options to pass to the association
       def self.build(klass, association_type, name, scope = nil, **options)
-        primary_key = options[:primary_key] || klass.primary_key
+        # Don't resolve `klass.primary_key` here: it may query the database schema,
+        # and associations must be declarable without a database connection.
+        # Like Rails' own associations, the owner's primary key is resolved lazily.
+        primary_key = options[:primary_key]
         foreign_key = options[:foreign_key] || ActiveSupport::Inflector.foreign_key(klass, true)
         foreign_key_alias = options[:foreign_key_alias] || "#{foreign_key}_alias"
 
         lateral_subselection_scope = lambda do
           relation = scope ? instance_exec(&scope) : self
           limit = association_type == :has_one ? 1 : nil
-          ActiveRecord::HasSomeOfMany::Associations.build_scope(klass, relation, primary_key: primary_key, foreign_key: foreign_key, foreign_key_alias: foreign_key_alias, limit: limit)
+          ActiveRecord::HasSomeOfMany::Associations.build_scope(klass, relation, primary_key: primary_key || klass.primary_key, foreign_key: foreign_key, foreign_key_alias: foreign_key_alias, limit: limit)
         end
 
-        options[:primary_key] = primary_key
+        options[:primary_key] = primary_key if primary_key
         options[:foreign_key] = foreign_key_alias
 
         klass.send(association_type, name, lateral_subselection_scope, **options)
