@@ -234,4 +234,21 @@ class ActiveRecordHasSomeOfManyTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test "declaring associations does not load the owner's primary key from the database" do
+    klass = Class.new(ActiveRecord::Base) do
+      self.table_name = "posts"
+      def self.name = "LazyPrimaryKeyPost"
+    end
+
+    klass.stub(:primary_key, -> { raise "primary_key should not be resolved at declaration" }) do
+      klass.has_one_of_many :last_comment, -> { order(created_at: :desc) }, class_name: "Comment", foreign_key: "post_id"
+      klass.has_some_of_many :last_two_comments, -> { order(created_at: :desc).limit(2) }, class_name: "Comment", foreign_key: "post_id"
+    end
+
+    post = klass.create!
+    comment = Comment.create!(post_id: post.id, body: "Hello")
+    assert_equal comment, klass.includes(:last_comment).find(post.id).last_comment
+    assert_equal [comment], klass.find(post.id).last_two_comments.to_a
+  end
 end
